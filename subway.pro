@@ -15,18 +15,16 @@ SOURCES += \
     SystemMonitor.cpp \
     TrainOperator.cpp \
     TransitNetwork.cpp \
-    commands.cpp \
     main.cpp
 
 HEADERS += \
     SimulationManager.h \
     SystemMonitor.h \
     TrainOperator.h \
-    TransitNetwork.h \
-    commands.h
+    TransitNetwork.h
 
 FORMS +=
-
+QMAKE_CXXFLAGS += -utf-8
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin

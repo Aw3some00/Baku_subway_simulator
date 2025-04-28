@@ -190,7 +190,7 @@ void TransitNetwork::setup_routes() {
                                    ));
     routes_->emplace("Light Green", Route(
                                         {"Jafar Jabbarly", "Hatai"},
-                                        "N/A",
+                                        "Hatai",
                                         2,
                                         1,
                                         true
