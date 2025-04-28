@@ -47,7 +47,7 @@ The program:
 - **Multithreaded Train Simulation**: Runs each train in a separate thread with mutex-protected platform access 🔒.
 - **Dynamic Passenger Management**: Simulates randomized passenger boarding 🧳 and alighting 🚶 based on station traffic.
 - **Emoji-Enhanced Logging**: Uses Unicode emojis (🚆, 🔴, ✅) for clear, visually appealing logs 📜.
-- **Fault Detection**: Simulates random train faults (1% chance per stop) with cost penalties 🛠️.
+- **Fault Detection**: Simulates random train faults (0,1% chance per stop) with cost penalties 🛠️.
 - **Real-Time Feedback**: Displays train movements, passenger updates, and shift completions in real time ⏳.
 - **Library Support**: Can be built as static or dynamic libraries for use in other applications 📚.
 
@@ -229,9 +229,7 @@ The simulator uses:
    Simulates train journeys, handling shifts, passengers, and faults.
 3. **`TrainOperator::return_to_hub(...)`**  
    Returns trains to hubs after shifts, locking platforms.
-4. **`TrainOperator::estimate_travel_time(double distance)`**  
-   Calculates travel time (60 seconds per km).
-5. **`clear_display()`**  
+4. **`clear_display()`**  
    Clears console using ANSI codes or `system("clear")`/`system("cls")`.
 
 ### TransitNetwork
