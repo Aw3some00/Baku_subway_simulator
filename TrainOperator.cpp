@@ -26,8 +26,7 @@ TrainOperator& TrainOperator::operator=(const TrainOperator& other) {
         operator_id_ = other.operator_id_;
         route_name_ = (other.route_name_);
         forward_direction_ = other.forward_direction_;
-        // network_ is a const reference and cannot be reassigned
-        // output_mutex_ is a reference and should not be reassigned
+
         data_ = other.data_;
     }
     return *this;
@@ -46,8 +45,7 @@ TrainOperator& TrainOperator::operator=(TrainOperator&& other) noexcept {
         operator_id_ = other.operator_id_;
         route_name_ = other.route_name_;
         forward_direction_ = other.forward_direction_;
-        // network_ is a const reference and cannot be reassigned
-        // output_mutex_ is a reference and should not be reassigned
+
         data_ = other.data_;
         //  other.route_name_ = nullptr;
     }
