@@ -6,21 +6,64 @@
 #include <ctime>
 #include <iostream>
 
-extern SystemMonitor monitor; // Global monitor for cost updates
+extern SystemMonitor monitor;
 
 TrainOperator::TrainOperator(int id, const std::string& route, bool is_forward, const TransitNetwork& network, std::mutex& output)
-    : operator_id_(id), route_name_(route), forward_direction_(is_forward), network_(network), output_mutex_(output) {}
+    : operator_id_(id), route_name_((route)), forward_direction_(is_forward), network_(network), output_mutex_(output) {}
+
+TrainOperator::~TrainOperator() {
+ //   delete route_name;
+}
+
+TrainOperator::TrainOperator(const TrainOperator& other)
+    : operator_id_(other.operator_id_), route_name_((other.route_name_)),
+    forward_direction_(other.forward_direction_), network_(other.network_),
+    output_mutex_(other.output_mutex_), data_(other.data_) {}
+
+TrainOperator& TrainOperator::operator=(const TrainOperator& other) {
+    if (this != &other) {
+      //  delete route_name_;
+        operator_id_ = other.operator_id_;
+        route_name_ = (other.route_name_);
+        forward_direction_ = other.forward_direction_;
+        // network_ is a const reference and cannot be reassigned
+        // output_mutex_ is a reference and should not be reassigned
+        data_ = other.data_;
+    }
+    return *this;
+}
+
+TrainOperator::TrainOperator(TrainOperator&& other) noexcept
+    : operator_id_(other.operator_id_), route_name_(other.route_name_),
+    forward_direction_(other.forward_direction_), network_(other.network_),
+    output_mutex_(other.output_mutex_), data_(other.data_) {
+  //  other.route_name_ = nullptr;
+}
+
+TrainOperator& TrainOperator::operator=(TrainOperator&& other) noexcept {
+    if (this != &other) {
+      //  delete route_name_;
+        operator_id_ = other.operator_id_;
+        route_name_ = other.route_name_;
+        forward_direction_ = other.forward_direction_;
+        // network_ is a const reference and cannot be reassigned
+        // output_mutex_ is a reference and should not be reassigned
+        data_ = other.data_;
+      //  other.route_name_ = nullptr;
+    }
+    return *this;
+}
 
 void TrainOperator::secure_log(const std::string& message) {
     std::lock_guard<std::mutex> lock(output_mutex_);
     std::cout << message << std::endl;
-    std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Замедленный вывод 😌
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
 }
 
 bool TrainOperator::is_high_traffic_time() {
     auto now = std::chrono::system_clock::now();
     time_t current_time = std::chrono::system_clock::to_time_t(now);
-    struct tm* time_info = localtime(&current_time); // Исправлено: &current_time вместо ¤t_time
+    struct tm* time_info = localtime(&current_time);
     return (time_info->tm_hour >= 7 && time_info->tm_hour < 9) || (time_info->tm_hour >= 17 && time_info->tm_hour < 19);
 }
 
@@ -32,19 +75,31 @@ int TrainOperator::estimate_travel_time(double distance) {
     return std::max(250, sim_ms);
 }
 
-void TrainOperator::start_journey() {
-    auto& route = network_.routes().at(route_name_);
-    const auto& stops = route.stops;
-    std::string hub = (route_name_ == "Red" || route_name_ == "Green") ? "Bakmil" :
-                          (route_name_ == "Purple") ? "Khojasan" : stops[0];
-    int hub_index = 0;
-    for (size_t i = 0; i < stops.size(); ++i) {
-        if (stops[i] == hub) hub_index = i;
+void TrainOperator::start_journey() {const auto* routes = network_.routes();
+    if (routes->find(route_name_) == routes->end()) {
+        secure_log("Error: Route " + route_name_ + " not found!");
+        return;
     }
-    int current_stop = hub_index != 0 ? hub_index : (forward_direction_ ? 0 : stops.size() - 1);
+
+    const auto& route = routes->at(route_name_);
+    auto stops = *route.stops;
+    if (stops.empty()) {
+        secure_log("Error: No stops in route " + route_name_);
+        return;
+    }
+
+    std::string hub = *route.hub;
+    int hub_index = 0;
+    for (std::vector<std::string>::size_type i = 0; i < stops.size(); ++i) {
+        if (stops[i] == hub) {
+            hub_index = static_cast<int>(i);
+            break;
+        }
+    }
+
+    int current_stop = (hub_index != 0) ? hub_index : (forward_direction_ ? 0 : static_cast<int>(stops.size()) - 1);
     int direction = forward_direction_ ? 1 : -1;
     bool is_shuttle = route.is_shuttle;
-
     std::map<std::string, int> stop_traffic = {
         {"Icheri Sheher", 300}, {"Sahil", 250}, {"28 May", 400}, {"Ganjlik", 200},
         {"Nariman Narimanov", 220}, {"Bakmil", 100}, {"Ulduz", 150}, {"Koroglu", 250},
@@ -94,7 +149,7 @@ void TrainOperator::start_journey() {
             std::string next_stop = (current_stop + direction >= 0 && current_stop + direction < static_cast<int>(stops.size())) ?
                                         stops[current_stop + direction] : "End of Route";
 
-            secure_log("🛤️ Train " + std::to_string(operator_id_) + " (" + route_name_ + ") reached " + stops[current_stop] +
+            secure_log("🛤️ Train " + std::to_string(operator_id_) + " (" +route_name_ + ") reached " + stops[current_stop] +
                        ", heading to " + next_stop + " 🚅");
 
             int riders_off = std::min(data_.riders, rider_rng(rng));
