@@ -270,10 +270,10 @@ You are free to use, modify, and distribute this project, retaining the original
 For inquiries, reach out to Email and TG:
 
 
-###Email:
-**fuadrashidov06@gmail.com**
-###TG:
-**Aw3some_0**
+###Email:.
+**fuadrashidov06@gmail.com**.
+###TG:.
+**Aw3some_0**.
 
 ---
 
