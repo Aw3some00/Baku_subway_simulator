@@ -7,10 +7,16 @@ TransitNetwork::Route::~Route() {
     delete stops;
     delete hub;
 }
-
 TransitNetwork::Route::Route(const Route& other)
-    : stops(new std::vector<std::string>(*other.stops)), hub(new std::string(*other.hub)),
-    platform_locks(other.platform_locks.size()), track_locks(other.track_locks.size()), is_shuttle(other.is_shuttle) {}
+    : stops(new std::vector<std::string>(*other.stops)),
+    hub(new std::string(*other.hub)),
+    platform_locks(),  // Don't copy mutexes, just create new ones
+    track_locks(),     // Don't copy mutexes, just create new ones
+    is_shuttle(other.is_shuttle) {
+    // Initialize mutex vectors with correct size
+    platform_locks = std::vector<std::mutex>(other.platform_locks.size());
+    track_locks = std::vector<std::mutex>(other.track_locks.size());
+}
 
 TransitNetwork::Route& TransitNetwork::Route::operator=(const Route& other) {
     if (this != &other) {
@@ -24,6 +30,7 @@ TransitNetwork::Route& TransitNetwork::Route::operator=(const Route& other) {
     }
     return *this;
 }
+
 
 TransitNetwork::Route::Route(Route&& other) noexcept
     : stops(other.stops), hub(other.hub), platform_locks(std::move(other.platform_locks)),
@@ -163,7 +170,7 @@ void TransitNetwork::setup_routes() {
                                  "Bakmil", "Ulduz", "Koroglu", "Kara Karaev", "Neftchilar",
                                  "Khalglar Dostlugu", "Ahmedli", "Azi Aslanov"},
                                 "Bakmil",
-                                12,
+                                13,
                                 12
                                 ));
     routes_->emplace("Green", Route(
@@ -172,19 +179,19 @@ void TransitNetwork::setup_routes() {
                                    "Ganjlik", "Nariman Narimanov", "Bakmil", "Ulduz", "Koroglu",
                                    "Kara Karaev", "Neftchilar", "Khalglar Dostlugu", "Ahmedli", "Azi Aslanov"},
                                   "Bakmil",
-                                  18,
+                                  19,
                                   18
                                   ));
     routes_->emplace("Purple", Route(
-                                   {"Khojasan", "Avtovagzal", "8 Noyabr"},
+                                   {"Khojasan", "Avtovagzal","Memar Acemi 2","8 Noyabr"},
                                    "Khojasan",
-                                   2,
-                                   2
+                                   4,
+                                   3
                                    ));
     routes_->emplace("Light Green", Route(
                                         {"Jafar Jabbarly", "Hatai"},
                                         "N/A",
-                                        1,
+                                        2,
                                         1,
                                         true
                                         ));

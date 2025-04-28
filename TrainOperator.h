@@ -22,8 +22,9 @@ public:
     TrainOperator(TrainOperator&& other) noexcept;
     TrainOperator& operator=(TrainOperator&& other) noexcept;
 
+    void return_to_hub( const std::vector<std::string>& stops, int current_stop, const TransitNetwork::Route& route);
     void start_journey();
-
+    bool running;
 private:
     void secure_log(const std::string& message);
     bool is_high_traffic_time();

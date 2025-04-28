@@ -11,8 +11,8 @@ public:
     struct Route {
         std::vector<std::string>* stops;
         std::string* hub;
-        std::vector<std::mutex> platform_locks;
-        std::vector<std::mutex> track_locks;
+        mutable std::vector<std::mutex> platform_locks;
+        mutable std::vector<std::mutex> track_locks;
         size_t platform_count=platform_locks.size();
         size_t track_count= track_locks.size();
         bool is_shuttle;
@@ -31,7 +31,7 @@ public:
     TransitNetwork& operator=(const TransitNetwork&);
     TransitNetwork(TransitNetwork&&) noexcept;
     TransitNetwork& operator=(TransitNetwork&&) noexcept;
-
+    void return_to_hub(const std::vector<std::string>& stops, int current_stop, const TransitNetwork::Route& route);
     const std::map<std::string, Route>* routes() const;
     double distance_between(const std::string& start, const std::string& end) const;
 

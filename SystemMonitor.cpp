@@ -32,10 +32,10 @@ void SystemMonitor::print_summary() {
 
     std::lock_guard<std::mutex> lock(rider_lock_);
     std::cout << "Total passengers served: " << total_riders_ << std::endl;
-    std::cout << "Revenue: " << std::fixed << std::setprecision(2) << income << " AZN" << std::endl;
-    std::cout << "Fuel expenses: " << std::fixed << std::setprecision(2) << energy_expense_ << " AZN" << std::endl;
-    std::cout << "Incident expenses: " << std::fixed << std::setprecision(2) << incident_expense_ << " AZN" << std::endl;
-    std::cout << "Maintenance cost: " << std::fixed << std::setprecision(2) << upkeep_cost << " AZN" << std::endl;
-    std::cout << "Total expenses: " << std::fixed << std::setprecision(2) << total_expense << " AZN" << std::endl;
-    std::cout << "Net profit: " << std::fixed << std::setprecision(2) << profit << " AZN" << std::endl;
+    std::cout << "Revenue: " << std::fixed << std::setprecision(2) << income << " Bucks" << std::endl;
+    std::cout << "Fuel expenses: " << std::fixed << std::setprecision(2) << energy_expense_ << " Bucks" << std::endl;
+    std::cout << "Incident expenses: " << std::fixed << std::setprecision(2) << incident_expense_ << " Bucks" << std::endl;
+    std::cout << "Maintenance cost: " << std::fixed << std::setprecision(2) << upkeep_cost << " Bucks" << std::endl;
+    std::cout << "Total expenses: " << std::fixed << std::setprecision(2) << total_expense << " Bucks" << std::endl;
+    std::cout << "Net profit: " << std::fixed << std::setprecision(2) << profit << " Bucks" << std::endl;
 }
