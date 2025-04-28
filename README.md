@@ -157,4 +157,4 @@ Fork, branch (`feature/YourFeature`), commit, and open a PR. See [CONTRIBUTING.m
 MIT License. See `LICENSE` for details.
 
 ## 💬 Contact
-Open an issue on GitHub or email [your-email@example.com](mailto:your-email@example.com).
+Open an issue on GitHub or email [Email](fuadrashidov06.com). 
