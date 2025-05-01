@@ -103,7 +103,7 @@ void TrainOperator::start_journey() {
     int direction = forward_direction_ ? 1 : -1;
     bool is_shuttle = route.is_shuttle;
     std::map<std::string, int> stop_traffic = {
-        {"Icheri Sheher", 300}, {"Sahil", 250}, {"28 May", 400}, {"Ganjlik", 200},
+        {"Icheri Sheher", 300},{"Memar Acemi 2",300}, {"Sahil", 250}, {"28 May", 400}, {"Ganjlik", 200},
         {"Nariman Narimanov", 220}, {"Bakmil", 100}, {"Ulduz", 150}, {"Koroglu", 250},
         {"Kara Karaev", 180}, {"Neftchilar", 150}, {"Khalglar Dostlugu", 200}, {"Ahmedli", 220},
         {"Azi Aslanov", 180}, {"Jafar Jabbarly", 200}, {"Hatai", 100},
