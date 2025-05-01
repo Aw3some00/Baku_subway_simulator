@@ -155,10 +155,17 @@ void TransitNetwork::setup_distances() {
         {{"Darnagul", "Azadlig Prospekti"}, 1.1},
         {{"28 May", "Nizami"}, 1.7},
         {{"Nizami", "28 May"}, 1.7},
+
+
+
         {{"Khojasan", "Avtovagzal"}, 2.0},
-        {{"Avtovagzal", "Khojasan"}, 2.0},
-        {{"Avtovagzal", "8 Noyabr"}, 1.5},
-        {{"8 Noyabr", "Avtovagzal"}, 1.5},
+        {{"Avtovagzal", "Memar Acemi 2"}, 2.0},
+        {{"Memar Acemi 2", "8 Noyabr"}, 1.5},
+        {{"8 Noyabr","Memar Acemi 2"}, 1.5},
+        {{"Memar Acemi 2","Avtovagzal"}, 2.0},
+        {{"Avtovagzal","Khojasan"}, 2.0},
+        \
+
         {{"Jafar Jabbarly", "Hatai"}, 1.0},
         {{"Hatai", "Jafar Jabbarly"}, 1.0}
     };
