@@ -5,49 +5,48 @@
 #include <thread>
 #include <ctime>
 #include <iostream>
+#include <cmath> // Для std::isnan и std::isinf
 
 extern SystemMonitor monitor;
 
 TrainOperator::TrainOperator(int id, const std::string& route, bool is_forward, const TransitNetwork& network, std::mutex& output)
-    : operator_id_(id), route_name_((route)), forward_direction_(is_forward), network_(network), output_mutex_(output) {}
+    : operator_id_(id), route_name_(route), forward_direction_(is_forward), network_(network), output_mutex_(output) {
+    // Инициализация data_ для предотвращения неопределенного поведения
+    data_.riders = 0;
+    data_.max_riders = 500; // Максимальная вместимость (можно настроить)
+    data_.total_km = 0.0;
+}
 
 TrainOperator::~TrainOperator() {
-    //   delete route_name;
+    // route_name_ — это std::string, нет необходимости в ручном удалении
 }
 
 TrainOperator::TrainOperator(const TrainOperator& other)
-    : operator_id_(other.operator_id_), route_name_((other.route_name_)),
+    : operator_id_(other.operator_id_), route_name_(other.route_name_),
     forward_direction_(other.forward_direction_), network_(other.network_),
     output_mutex_(other.output_mutex_), data_(other.data_) {}
 
 TrainOperator& TrainOperator::operator=(const TrainOperator& other) {
     if (this != &other) {
-        //  delete route_name_;
         operator_id_ = other.operator_id_;
-        route_name_ = (other.route_name_);
+        route_name_ = other.route_name_;
         forward_direction_ = other.forward_direction_;
-
         data_ = other.data_;
     }
     return *this;
 }
 
 TrainOperator::TrainOperator(TrainOperator&& other) noexcept
-    : operator_id_(other.operator_id_), route_name_(other.route_name_),
+    : operator_id_(other.operator_id_), route_name_(std::move(other.route_name_)),
     forward_direction_(other.forward_direction_), network_(other.network_),
-    output_mutex_(other.output_mutex_), data_(other.data_) {
-    //  other.route_name_ = nullptr;
-}
+    output_mutex_(other.output_mutex_), data_(std::move(other.data_)) {}
 
 TrainOperator& TrainOperator::operator=(TrainOperator&& other) noexcept {
     if (this != &other) {
-        //  delete route_name_;
         operator_id_ = other.operator_id_;
-        route_name_ = other.route_name_;
+        route_name_ = std::move(other.route_name_);
         forward_direction_ = other.forward_direction_;
-
-        data_ = other.data_;
-        //  other.route_name_ = nullptr;
+        data_ = std::move(other.data_);
     }
     return *this;
 }
@@ -67,13 +66,19 @@ bool TrainOperator::is_high_traffic_time() {
 
 int TrainOperator::estimate_travel_time(double distance) {
     const double speed_kmh = 40.0;
-    int real_seconds = static_cast<int>((distance / speed_kmh) * 3600);
     const double sim_scale = 120.0;
+    // Проверка входных параметров
+    if (distance <= 0 || std::isnan(distance) || std::isinf(distance) || speed_kmh == 0 || sim_scale == 0) {
+        secure_log("Error: Invalid parameters in estimate_travel_time (distance=" + std::to_string(distance) + ")");
+        return 250;
+    }
+    int real_seconds = static_cast<int>((distance / speed_kmh) * 3600);
     int sim_ms = static_cast<int>((real_seconds / sim_scale) * 1000);
     return std::max(250, sim_ms);
 }
 
-void TrainOperator::start_journey() {const auto* routes = network_.routes();
+void TrainOperator::start_journey() {
+    const auto* routes = network_.routes();
     if (routes->find(route_name_) == routes->end()) {
         secure_log("Error: Route " + route_name_ + " not found!");
         return;
@@ -138,65 +143,79 @@ void TrainOperator::start_journey() {const auto* routes = network_.routes();
 
     while (std::chrono::steady_clock::now() - sim_start < sim_limit) {
         auto shift_start = std::chrono::steady_clock::now();
-      //  secure_log("⏰ Train " + std::to_string(operator_id_) + " (" + route_name_ + ") shift " + std::to_string(shift_number) + " started ");
+        std::string shift_message = "⏰ Train " + std::to_string(operator_id_) + " (" + route_name_ + ") shift " +
+                                    std::to_string(shift_number) + " started ";
         if (route_name_ == "Red") {
-            secure_log("⏰ Train " + std::to_string(operator_id_) + " (" + route_name_ + ") shift " + std::to_string(shift_number) + " started \U0001F534 \u2705");
+            shift_message += "\U0001F534 \u2705";
         } else if (route_name_ == "Green") {
-            secure_log("⏰ Train " + std::to_string(operator_id_) + " (" + route_name_ + ") shift " + std::to_string(shift_number) + " started \U0001F7E2 \u2705");
+            shift_message += "\U0001F7E2 \u2705";
         } else if (route_name_ == "Purple") {
-            secure_log("⏰ Train " + std::to_string(operator_id_) + " (" + route_name_ + ") shift " + std::to_string(shift_number) + " started \U0001F7E3 \u2705");
+            shift_message += "\U0001F7E3 \u2705";
         } else if (route_name_ == "Light Green") {
-            secure_log("⏰ Train " + std::to_string(operator_id_) + " (" + route_name_ + ") shift " + std::to_string(shift_number) + " started \U0001F49A \u2705");
+            shift_message += "\U0001F49A \u2705";
         }
+        secure_log(shift_message);
 
         while (std::chrono::steady_clock::now() - shift_start < shift_limit &&
                std::chrono::steady_clock::now() - sim_start < sim_limit) {
+            // Проверка корректности current_stop
+            if (current_stop < 0 || current_stop >= static_cast<int>(stops.size())) {
+                secure_log("Error: Invalid stop index " + std::to_string(current_stop));
+                return;
+            }
+
             std::unique_lock<std::mutex> stop_lock(stop_locks[stops[current_stop]]);
 
             std::string next_stop = (current_stop + direction >= 0 && current_stop + direction < static_cast<int>(stops.size())) ?
                                         stops[current_stop + direction] : "End of Route";
 
-
-
-          //  secure_log("🛤️ Train " + std::to_string(operator_id_) + " (" +route_name_ + ") reached " + stops[current_stop] +
-           //            ", heading to " + next_stop + " 🚅");
+            std::string arrive_message = "🛤️ Train " + std::to_string(operator_id_) + " (" + route_name_ + ") reached " +
+                                         stops[current_stop] + ", heading to " + next_stop + " 🚅";
             if (route_name_ == "Red") {
-                secure_log("⏰ Train " + std::to_string(operator_id_) + " (" + route_name_ + ") reached " + stops[current_stop]+ " started \U0001F534 ");
+                arrive_message += " \U0001F534";
             } else if (route_name_ == "Green") {
-                secure_log("⏰ Train " + std::to_string(operator_id_) + " (" + route_name_ + ") reached " + stops[current_stop] + " started \U0001F7E2 ");
+                arrive_message += " \U0001F7E2";
             } else if (route_name_ == "Purple") {
-                secure_log("⏰ Train " + std::to_string(operator_id_) + " (" + route_name_ + ") reached " + stops[current_stop] + " started \U0001F7E3 ");
+                arrive_message += " \U0001F7E3";
             } else if (route_name_ == "Light Green") {
-                secure_log("⏰ Train " + std::to_string(operator_id_) + " (" + route_name_ + ") reached " + stops[current_stop] + " started \U0001F49A ");
+                arrive_message += " \U0001F49A";
+            }
+            secure_log(arrive_message);
+
+            // Проверка stop_traffic
+            if (stop_traffic.find(stops[current_stop]) == stop_traffic.end()) {
+                secure_log("Error: Stop " + stops[current_stop] + " not found in stop_traffic!");
+                return;
+            }
+            if (stop_traffic[stops[current_stop]] == 0) {
+                secure_log("Error: Zero traffic value for stop " + stops[current_stop]);
+                return;
             }
 
             int riders_off = std::min(data_.riders, rider_rng(rng));
             int riders_on = rider_rng(rng) % stop_traffic[stops[current_stop]];
             riders_on = is_high_traffic_time() ? riders_on * 2 : riders_on;
 
+            // Отладочный лог перед выводом сообщения
+            secure_log("Debug: riders_off=" + std::to_string(riders_off) + ", riders_on=" + std::to_string(riders_on) +
+                       ", data_.riders=" + std::to_string(data_.riders) + ", stop=" + stops[current_stop]);
+
             monitor.record_passengers(riders_on, riders_off);
             data_.riders = std::min(data_.max_riders, data_.riders - riders_off + riders_on);
 
-           /* secure_log("👥 Train " + std::to_string(operator_id_) + " (" + route_name_ + "): " +
-                       std::to_string(riders_off) + " alighted 🚶, " + std::to_string(riders_on) + " boarded 🧳, current: " +
-                       std::to_string(data_.riders) + " passengers");*/
+            std::string passenger_message = "👥 Train " + std::to_string(operator_id_) + " (" + route_name_ + "): " +
+                                            std::to_string(riders_off) + " alighted 🚶, " + std::to_string(riders_on) +
+                                            " boarded 🧳, current: " + std::to_string(data_.riders) + " passengers";
             if (route_name_ == "Red") {
-                secure_log("👥 Train " + std::to_string(operator_id_) + " (" + route_name_ + ") \U0001F534: " +
-                           std::to_string(riders_off) + " alighted 🚶, " + std::to_string(riders_on) + " boarded 🧳, current: " +
-                           std::to_string(data_.riders) + " passengers ");
+                passenger_message += " \U0001F534";
             } else if (route_name_ == "Green") {
-                secure_log("👥 Train " + std::to_string(operator_id_) + " (" + route_name_ + ") \U0001F7E2: " +
-                           std::to_string(riders_off) + " alighted 🚶, " + std::to_string(riders_on) + " boarded 🧳, current: " +
-                           std::to_string(data_.riders) + " passengers ");
+                passenger_message += " \U0001F7E2";
             } else if (route_name_ == "Purple") {
-                secure_log("👥 Train " + std::to_string(operator_id_) + " (" + route_name_ + ") \U0001F7E3: " +
-                           std::to_string(riders_off) + " alighted 🚶, " + std::to_string(riders_on) + " boarded 🧳, current: " +
-                           std::to_string(data_.riders) + " passengers ");
+                passenger_message += " \U0001F7E3";
             } else if (route_name_ == "Light Green") {
-                secure_log("👥 Train " + std::to_string(operator_id_) + " (" + route_name_ + ") \U0001F49A: " +
-                           std::to_string(riders_off) + " alighted 🚶, " + std::to_string(riders_on) + " boarded 🧳, current: " +
-                           std::to_string(data_.riders) + " passengers ");
+                passenger_message += " \U0001F49A";
             }
+            secure_log(passenger_message);
 
             int stop_duration = (20 + (rand() % 21)) * 1000 / 120;
             std::this_thread::sleep_for(std::chrono::milliseconds(stop_duration));
@@ -207,6 +226,10 @@ void TrainOperator::start_journey() {const auto* routes = network_.routes();
 
             if (current_stop + direction >= 0 && current_stop + direction < static_cast<int>(stops.size())) {
                 double distance = network_.distance_between(stops[current_stop], stops[current_stop + direction]);
+                if (distance <= 0 || std::isnan(distance) || std::isinf(distance)) {
+                    secure_log("Error: Invalid distance between " + stops[current_stop] + " and " + stops[current_stop + direction]);
+                    return;
+                }
                 data_.total_km += distance;
                 int travel_time = estimate_travel_time(distance);
                 secure_log("🚄 Train " + std::to_string(operator_id_) + " traveling to " + stops[current_stop + direction] +
