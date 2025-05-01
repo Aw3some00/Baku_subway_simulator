@@ -5,20 +5,19 @@
 #include <thread>
 #include <ctime>
 #include <iostream>
-#include <cmath> // Для std::isnan и std::isinf
+#include <cmath>
 
 extern SystemMonitor monitor;
 
 TrainOperator::TrainOperator(int id, const std::string& route, bool is_forward, const TransitNetwork& network, std::mutex& output)
     : operator_id_(id), route_name_(route), forward_direction_(is_forward), network_(network), output_mutex_(output) {
-    // Инициализация data_ для предотвращения неопределенного поведения
+
     data_.riders = 0;
-    data_.max_riders = 500; // Максимальная вместимость (можно настроить)
+    data_.max_riders = 500;
     data_.total_km = 0.0;
 }
 
 TrainOperator::~TrainOperator() {
-    // route_name_ — это std::string, нет необходимости в ручном удалении
 }
 
 TrainOperator::TrainOperator(const TrainOperator& other)
@@ -196,9 +195,9 @@ void TrainOperator::start_journey() {
             int riders_on = rider_rng(rng) % stop_traffic[stops[current_stop]];
             riders_on = is_high_traffic_time() ? riders_on * 2 : riders_on;
 
-            // Отладочный лог перед выводом сообщения
-            secure_log("Debug: riders_off=" + std::to_string(riders_off) + ", riders_on=" + std::to_string(riders_on) +
-                       ", data_.riders=" + std::to_string(data_.riders) + ", stop=" + stops[current_stop]);
+
+       /*     secure_log("Debug: riders_off=" + std::to_string(riders_off) + ", riders_on=" + std::to_string(riders_on) +
+                       ", data_.riders=" + std::to_string(data_.riders) + ", stop=" + stops[current_stop]);*/
 
             monitor.record_passengers(riders_on, riders_off);
             data_.riders = std::min(data_.max_riders, data_.riders - riders_off + riders_on);
