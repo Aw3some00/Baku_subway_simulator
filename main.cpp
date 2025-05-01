@@ -1,8 +1,5 @@
 #include "SimulationManager.h"
-#include <iostream>
-#include <sstream>
-#include <chrono>
-#include <iomanip>
+
 
 int main() {
 

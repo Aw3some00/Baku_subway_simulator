@@ -6,7 +6,7 @@
 #include "SystemMonitor.h"
 #include <vector>
 #include <thread>
-
+void clear_display();
 class SimulationManager {
 public:
 

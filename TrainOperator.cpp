@@ -215,7 +215,7 @@ void TrainOperator::start_journey() {const auto* routes = network_.routes();
             }
 
             if (fault_rng(rng) < 0.01) {
-                secure_log("⚠️ Train " + std::to_string(operator_id_) + " (" + route_name_ + ") experienced a fault 🛠️, cost: 50 AZN 💸");
+                secure_log("⚠️ Train " + std::to_string(operator_id_) + " (" + route_name_ + ") experienced a fault 🛠️, cost: 300 bucks 💸");
                 monitor.log_incident_cost(50.0);
             }
 

@@ -4,6 +4,7 @@
 #include <limits>
 
 void clear_display() {
+    std::cout << "\033[2J\033[1;1H" << std::flush;
 #ifdef _WIN32
     system("cls");
 #else
